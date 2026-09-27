@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CreditWise – ML-Powered Loan Approval Prediction</title>
+  <meta name="description" content="Analyze applicant information and generate a preliminary loan approval prediction using Machine Learning." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('home') }}" class="nav-brand">
+        <div class="brand-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="3"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+            <circle cx="7" cy="15" r="1.2" fill="currentColor"></circle>
+          </svg>
+        </div>
+        <span class="brand-name">CreditWise</span>
+      </a>
+      <nav class="nav-links">
+        <a href="{{ url_for('predict_form') }}" class="nav-link-cta">Check Eligibility</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="hero-section">
+    <div class="hero-card">
+      <div class="badge-tag">
+        <span class="badge-dot"></span>
+        ML-Powered Loan Approval Prediction
+      </div>
+      
+      <h1 class="hero-title">CreditWise</h1>
+      
+      <p class="hero-description">
+        Analyze applicant information and generate a preliminary loan approval prediction using Machine Learning.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="{{ url_for('predict_form') }}" class="btn-primary" id="check-eligibility-btn">
+          <span>Check Loan Eligibility</span>
+          <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+
+      <!-- 3 Small Feature Cards -->
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-box">🤖</div>
+          <h3 class="feature-title">Machine Learning Powered</h3>
+          <p class="feature-desc">Trained on comprehensive applicant data with validated preprocessing pipelines.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">⚡</div>
+          <h3 class="feature-title">Instant Prediction</h3>
+          <p class="feature-desc">Real-time evaluation providing instant decision verdicts and probability metrics.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">📊</div>
+          <h3 class="feature-title">Data-Driven Assessment</h3>
+          <p class="feature-desc">Holistic appraisal across personal profile, debt ratios, credit scores, and collateral.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Clean Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p>CreditWise &bull; SML Minor Project &bull; Machine Learning Loan Approval System</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
