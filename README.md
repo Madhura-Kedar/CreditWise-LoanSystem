@@ -1,6 +1,5 @@
 # CreditWise – Loan Approval Prediction System
 
-**GitHub Repository:** https://github.com/Madhura-Kedar/CreditWise-LoanSystem  
 **Live Demo:** *(Will be added after Render deployment)*
 
 ---
