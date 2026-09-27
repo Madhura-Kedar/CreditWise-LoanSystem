@@ -1,6 +1,6 @@
 # CreditWise – Loan Approval Prediction System
 
-**Live Demo:** *(Will be added after Render deployment)*
+**Live Demo:** https://creditwise-loansystem.onrender.com
 
 ---
 
