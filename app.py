@@ -143,6 +143,243 @@ def preprocess_input(form_data):
 
 
 # ------------------------------------------------------------------
+# 3b. Decision Factor Analysis
+#     Evaluates each input against lending criteria thresholds
+#     and returns a list of dicts with pass/fail status and reason.
+# ------------------------------------------------------------------
+def generate_decision_factors(form_data):
+    """
+    Evaluates each applicant metric against standard lending thresholds.
+    Returns a list of criterion dicts:
+        {
+            "label": str,         # Human-readable criterion name
+            "value": str,         # Formatted input value
+            "status": str,        # "pass" | "fail" | "warn"
+            "reason": str,        # Why it passed or failed
+            "recommendation": str | None,  # What would fix it (for fails)
+        }
+    """
+    factors = []
+
+    # ── Credit Score ──────────────────────────────────────────────
+    credit_score = float(form_data.get("credit_score", 0))
+    if credit_score >= 750:
+        factors.append({
+            "label": "Credit Score",
+            "value": f"{int(credit_score)}",
+            "status": "pass",
+            "reason": f"Excellent credit score of {int(credit_score)} — well above the minimum threshold of 650.",
+            "recommendation": None,
+        })
+    elif credit_score >= 650:
+        factors.append({
+            "label": "Credit Score",
+            "value": f"{int(credit_score)}",
+            "status": "warn",
+            "reason": f"Acceptable credit score of {int(credit_score)}, but in the borderline range (650–749).",
+            "recommendation": "Aim for a score above 750 by clearing outstanding dues.",
+        })
+    else:
+        factors.append({
+            "label": "Credit Score",
+            "value": f"{int(credit_score)}",
+            "status": "fail",
+            "reason": f"Credit score of {int(credit_score)} is below the required minimum of 650.",
+            "recommendation": "Improve your score to at least 650 before re-applying.",
+        })
+
+    # ── DTI Ratio ─────────────────────────────────────────────────
+    dti = float(form_data.get("dti_ratio", 1.0))
+    dti_pct = round(dti * 100, 1)
+    if dti <= 0.35:
+        factors.append({
+            "label": "Debt-to-Income Ratio",
+            "value": f"{dti_pct}%",
+            "status": "pass",
+            "reason": f"DTI ratio of {dti_pct}% is within the acceptable range (≤ 35%).",
+            "recommendation": None,
+        })
+    elif dti <= 0.50:
+        factors.append({
+            "label": "Debt-to-Income Ratio",
+            "value": f"{dti_pct}%",
+            "status": "warn",
+            "reason": f"DTI ratio of {dti_pct}% is elevated (36%–50%), reducing approval confidence.",
+            "recommendation": "Reduce existing debt or increase income before applying.",
+        })
+    else:
+        factors.append({
+            "label": "Debt-to-Income Ratio",
+            "value": f"{dti_pct}%",
+            "status": "fail",
+            "reason": f"DTI ratio of {dti_pct}% exceeds the maximum acceptable limit of 50%.",
+            "recommendation": "Pay off existing loans to bring DTI below 50%.",
+        })
+
+    # ── Loan-to-Income Ratio ──────────────────────────────────────
+    applicant_income = float(form_data.get("applicant_income", 1))
+    coapplicant_income = float(form_data.get("coapplicant_income", 0))
+    loan_amount = float(form_data.get("loan_amount", 0))
+    total_income = applicant_income + coapplicant_income
+    if total_income > 0:
+        lti = loan_amount / total_income
+        if lti <= 10:
+            factors.append({
+                "label": "Loan-to-Income Ratio",
+                "value": f"{lti:.1f}x",
+                "status": "pass",
+                "reason": f"Loan-to-income ratio of {lti:.1f}x is within comfortable lending limits (≤ 10x).",
+                "recommendation": None,
+            })
+        elif lti <= 15:
+            factors.append({
+                "label": "Loan-to-Income Ratio",
+                "value": f"{lti:.1f}x",
+                "status": "warn",
+                "reason": f"Loan-to-income ratio of {lti:.1f}x is high and raises affordability concerns.",
+                "recommendation": "Consider reducing the loan amount or adding a co-applicant with higher income.",
+            })
+        else:
+            factors.append({
+                "label": "Loan-to-Income Ratio",
+                "value": f"{lti:.1f}x",
+                "status": "fail",
+                "reason": f"Loan-to-income ratio of {lti:.1f}x is too high — exceeds 15x of combined monthly income.",
+                "recommendation": "Significantly reduce the loan amount or increase total household income.",
+            })
+
+    # ── Existing Loans ────────────────────────────────────────────
+    existing_loans = float(form_data.get("existing_loans", 0))
+    if existing_loans == 0:
+        factors.append({
+            "label": "Existing Loans",
+            "value": "None",
+            "status": "pass",
+            "reason": "No existing active loans — applicant has a clean debt slate.",
+            "recommendation": None,
+        })
+    elif existing_loans <= 2:
+        factors.append({
+            "label": "Existing Loans",
+            "value": f"{int(existing_loans)}",
+            "status": "warn",
+            "reason": f"{int(existing_loans)} existing loan(s) adds moderate repayment burden.",
+            "recommendation": "Close existing loans before taking additional credit.",
+        })
+    else:
+        factors.append({
+            "label": "Existing Loans",
+            "value": f"{int(existing_loans)}",
+            "status": "fail",
+            "reason": f"{int(existing_loans)} existing active loans indicates excessive debt obligations.",
+            "recommendation": "Clear at least some existing loans before applying for a new one.",
+        })
+
+    # ── Savings Buffer ────────────────────────────────────────────
+    savings = float(form_data.get("savings", 0))
+    min_savings = loan_amount * 0.10  # Need at least 10% of loan as savings
+    if savings >= min_savings and savings >= 10000:
+        factors.append({
+            "label": "Savings Buffer",
+            "value": f"₹{savings:,.0f}",
+            "status": "pass",
+            "reason": f"Savings of ₹{savings:,.0f} provide an adequate financial cushion (≥ 10% of loan amount).",
+            "recommendation": None,
+        })
+    elif savings > 0:
+        factors.append({
+            "label": "Savings Buffer",
+            "value": f"₹{savings:,.0f}",
+            "status": "warn",
+            "reason": f"Savings of ₹{savings:,.0f} are below the recommended 10% of loan amount (₹{min_savings:,.0f}).",
+            "recommendation": f"Build savings to at least ₹{min_savings:,.0f} before applying.",
+        })
+    else:
+        factors.append({
+            "label": "Savings Buffer",
+            "value": "₹0",
+            "status": "fail",
+            "reason": "No savings reported — lenders require a minimum financial safety net.",
+            "recommendation": f"Maintain savings of at least ₹{min_savings:,.0f} (10% of loan amount).",
+        })
+
+    # ── Collateral Coverage ───────────────────────────────────────
+    collateral_value = float(form_data.get("collateral_value", 0))
+    if collateral_value >= loan_amount * 0.80:
+        factors.append({
+            "label": "Collateral Coverage",
+            "value": f"₹{collateral_value:,.0f}",
+            "status": "pass",
+            "reason": f"Collateral value covers ≥ 80% of loan — strong security for the lender.",
+            "recommendation": None,
+        })
+    elif collateral_value >= loan_amount * 0.40:
+        factors.append({
+            "label": "Collateral Coverage",
+            "value": f"₹{collateral_value:,.0f}",
+            "status": "warn",
+            "reason": f"Collateral covers {int(collateral_value/loan_amount*100)}% of the loan — partial coverage reduces lender confidence.",
+            "recommendation": "Provide additional collateral or reduce the requested loan amount.",
+        })
+    else:
+        factors.append({
+            "label": "Collateral Coverage",
+            "value": f"₹{collateral_value:,.0f}",
+            "status": "fail",
+            "reason": f"Collateral is insufficient — covers only {int(collateral_value/loan_amount*100) if loan_amount > 0 else 0}% of the loan.",
+            "recommendation": f"Increase collateral to at least ₹{loan_amount * 0.80:,.0f} (80% of loan amount).",
+        })
+
+    # ── Employment Status ─────────────────────────────────────────
+    employment = form_data.get("employment_status", "")
+    if employment == "Employed":
+        factors.append({
+            "label": "Employment Status",
+            "value": employment,
+            "status": "pass",
+            "reason": "Stable employment provides reliable income assurance for repayment.",
+            "recommendation": None,
+        })
+    elif employment == "Self-Employed":
+        factors.append({
+            "label": "Employment Status",
+            "value": employment,
+            "status": "warn",
+            "reason": "Self-employment indicates variable income, which may affect repayment consistency.",
+            "recommendation": "Provide additional income proof or tax returns to strengthen the application.",
+        })
+    else:
+        factors.append({
+            "label": "Employment Status",
+            "value": employment,
+            "status": "fail",
+            "reason": f"'{employment}' employment status indicates uncertain or no fixed income source.",
+            "recommendation": "Secure stable employment before applying for a loan.",
+        })
+
+    # ── Education Level ───────────────────────────────────────────
+    education = form_data.get("education_level", "")
+    if education == "Graduate":
+        factors.append({
+            "label": "Education Level",
+            "value": education,
+            "status": "pass",
+            "reason": "Graduate-level education is associated with higher earning potential and financial stability.",
+            "recommendation": None,
+        })
+    else:
+        factors.append({
+            "label": "Education Level",
+            "value": education,
+            "status": "warn",
+            "reason": "Non-graduate education is a minor risk factor in the model's assessment.",
+            "recommendation": "Compensate with stronger financial metrics such as higher income or savings.",
+        })
+
+    return factors
+
+
+# ------------------------------------------------------------------
 # 4. Route Handlers
 # ------------------------------------------------------------------
 
@@ -240,7 +477,10 @@ def predict():
             form_data=request.form,
         )
 
-    # 4.4 Render the Result Card Page
+    # 4.4 Build decision factor analysis
+    decision_factors = generate_decision_factors(request.form)
+
+    # 4.5 Render the Result Card Page
     return render_template(
         "result.html",
         result_label=result_label,
@@ -248,6 +488,7 @@ def predict():
         prob_approved=prob_approved,
         prob_rejected=prob_rejected,
         form_data=request.form,
+        decision_factors=decision_factors,
     )
 
 

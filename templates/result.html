@@ -220,6 +220,82 @@
         </div>
       </div>
 
+      <!-- ── Decision Analysis Card ─────────────────────────────── -->
+      {% if decision_factors %}
+      <div class="analysis-section-card">
+        <div class="analysis-header">
+          <div class="analysis-title-group">
+            <div class="section-badge-icon {% if is_approved %}icon-approved{% else %}icon-rejected{% endif %}">
+              {% if is_approved %}✅{% else %}🔍{% endif %}
+            </div>
+            <div>
+              {% if is_approved %}
+                <h2 class="analysis-heading approved-analysis-heading">Why Was This Loan Approved?</h2>
+                <p class="analysis-subheading">Key factors that met or exceeded lending criteria</p>
+              {% else %}
+                <h2 class="analysis-heading rejected-analysis-heading">Why Was This Loan Rejected?</h2>
+                <p class="analysis-subheading">Criteria that did not meet standard lending requirements</p>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Summary pill counts -->
+          <div class="analysis-pill-row">
+            {% set pass_count = decision_factors | selectattr("status", "eq", "pass") | list | length %}
+            {% set warn_count = decision_factors | selectattr("status", "eq", "warn") | list | length %}
+            {% set fail_count = decision_factors | selectattr("status", "eq", "fail") | list | length %}
+            <span class="pill pill-pass">✓ {{ pass_count }} Passed</span>
+            {% if warn_count > 0 %}<span class="pill pill-warn">⚠ {{ warn_count }} Borderline</span>{% endif %}
+            {% if fail_count > 0 %}<span class="pill pill-fail">✗ {{ fail_count }} Failed</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          {% for factor in decision_factors %}
+          <div class="analysis-factor-row factor-{{ factor.status }}">
+            <!-- Status Icon -->
+            <div class="factor-icon-col">
+              {% if factor.status == "pass" %}
+                <div class="factor-badge factor-badge-pass">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              {% elif factor.status == "warn" %}
+                <div class="factor-badge factor-badge-warn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                </div>
+              {% else %}
+                <div class="factor-badge factor-badge-fail">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Criterion content -->
+            <div class="factor-content-col">
+              <div class="factor-top-row">
+                <span class="factor-label">{{ factor.label }}</span>
+                <span class="factor-value factor-value-{{ factor.status }}">{{ factor.value }}</span>
+              </div>
+              <p class="factor-reason">{{ factor.reason }}</p>
+              {% if factor.recommendation %}
+              <div class="factor-recommendation">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>{{ factor.recommendation }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if not is_approved %}
+        <div class="analysis-footer-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <span>Address the failed criteria above and reapply to significantly improve your approval chances.</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
     </div>
   </main>
 
