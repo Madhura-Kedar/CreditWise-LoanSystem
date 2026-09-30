@@ -192,8 +192,6 @@ This application is deployed on **Render** using Gunicorn as the production WSGI
 gunicorn app:app
 ```
 
-**Live URL:** *(Will be added after Render deployment)*
-
 ---
 
 ## Limitations
